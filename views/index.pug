@@ -5,5 +5,8 @@ html(lang='ja')
     title mapapp
   body
     a(href='/signin') ログイン
-    a(href='/signin') 新規登録
-
+    br
+    a(href='/register') 新規登録
+    if user != null
+      span.login-user
+        = user.user_name
