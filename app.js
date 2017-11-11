@@ -20,12 +20,15 @@ connection.query('SELECT 1 + 1 AS solution', function(err, rows, fields) {
   console.log('The solution is: ', rows[0].solution);
 });
 
-connection.end();
+// これ使っちゃダメよ！
+// connection.end();
 
 
 
 app.set('views', `${__dirname}/views`);
 app.set('view engine', 'pug');
+
+app.use(express.static(`${__dirname}/public`));
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -37,15 +40,7 @@ app.use(session({
 }));
 
 
-app.get('/', function (req,res) {
-	res.render('index.pug');
-});
-
-app.get('/register', function (req,res) {
-	res.render('register.pug');
-});
-
-app.get('/', function(req, res, next) {
+app.get('/', (req,res) => {
 	if (req.session.user_id) {
 		res.redirect('/');
 	} else {
@@ -53,10 +48,21 @@ app.get('/', function(req, res, next) {
 			title: 'ログイン',
 		});
 	}
+
+	res.render('index.pug');
+});
+
+app.get('/register', (req,res) => {
+	res.render('register.pug');
 });
 
 app.get('/signin', function (req,res) {
 	res.render('signin.pug');
+});
+
+app.get('/signout', function (req,res) {
+	req.session.user_id = null;
+	res.redirect('/');
 });
 
 app.post('/register', function(req, res, next) {
@@ -70,13 +76,18 @@ app.post('/register', function(req, res, next) {
 	var registerQuery = 'INSERT INTO users (user_name, email, password, created_at) VALUES ("' + userName + '", ' + '"' + email + '", ' + '"' + password + '", ' + '"' + createdAt + '")';
 	
 	connection.query(emailExistsQuery, function(err, result) {
-		if (result.length > 0) {
+		if (result && result.length > 0) {
 			res.render('register', {
 				title: '新規会員登録' ,
 				emailExists: '既に登録されていメールアドレスです'
 			});
 		} else {
 			connection.query(registerQuery, function(err, rows) {
+				if (err) {
+					console.log(err);
+				} else {
+					console.log('success')
+				}
 				res.redirect('/signin');
 			});
 		}
@@ -93,12 +104,27 @@ app.post('/register', function(req, res, next) {
 app.post('/signin', function(req, res, next) {
 	var email = req.body.email;
 	var password = req.body.password;
-	var query ='SELECT user_id FROM users WHERE email = "' + email + '" AND password = "' + password + '" LIMIT 1';
+	var query ='SELECT user_id, user_name FROM users WHERE email = "' + email + '" AND password = "' + password + '" LIMIT 1';
 	connection.query(query, function(err, rows) {
-		var userId = rows.length ? rows[0].user_id : false;
+		if (err) {
+			console.log(err);
+		} else {
+			console.log('success');
+		}	
+
+		var userId = (rows && rows.length) ? rows[0].user_id : false;
+		var userName = (rows && rows.length) ? rows[0].user_name : false;
 		if (userId) {
 			req.session.user_id = userId;
-			res.redirect('/');
+			//res.redirect('/');
+			res.render('index', {
+				userId,
+				userName
+			});
+
+			console.log(userId);
+
+			console.log(rows[0].user_name)
 		} else {
 			res.render('signin', {
 				title: 'ログイン',

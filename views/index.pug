@@ -3,10 +3,45 @@ html(lang='ja')
   head
     meta(charset='utf-8')
     title mapapp
+    link(rel='stylesheet', href='/css/style.css')
   body
-    a(href='/signin') ログイン
-    br
-    a(href='/register') 新規登録
-    if user != null
-      span.login-user
-        = user.user_name
+    if typeof userId !== 'undefined' 
+      p.login-user #{userName}さんとしてログインしています
+      a(href='/signout') ログアウト
+    else
+      a(href='/signin') ログイン
+      br
+      a(href='/register') 新規登録
+
+    #map
+    script.
+      var map;
+      function initFunc() {
+        let lat = 35.000, 
+            lng = 135.000;
+
+        let initMap = (lat, lng) => {
+          map = new google.maps.Map(document.getElementById('map'), {
+            center: { lat, lng },
+            zoom: 8
+          });
+          let marker = new google.maps.Marker({
+            position: { lat, lng },
+            map
+          });
+        }
+
+        let getPos = () => {
+          if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition((pos) => {
+              lat = pos.coords.latitude;
+              lng = pos.coords.longitude;
+              console.log(lat, lng)
+              initMap(lat, lng)
+            })
+          }
+        }
+        
+        getPos();
+      }
+    script(src='https://maps.googleapis.com/maps/api/js?key=AIzaSyB-tbbm7yuonMEKcGOcfwwW-N8Kar96GRY&callback=initFunc', async, defer)

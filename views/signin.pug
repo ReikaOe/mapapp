@@ -9,11 +9,11 @@ html
       p.main-title
       form.board-form(action='/signin', method='post')
         span.label Eメール
-        input.input(type='email', name='email', required='')
+        input.input(type='email', name='email', required)
         br
         br
         span.label パスワード
-        input.input(type='password', name='password', required='')
+        input.input(type='password', name='password', required)
         br
         br
         button.submit(type='submit') ログイン
