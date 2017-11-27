@@ -40,33 +40,28 @@ app.use(session({
 }));
 
 
-app.get('/', (req,res) => {
+app.get('/', (req, res) => {
 	if (req.session.user_id) {
-		res.redirect('/');
-	} else {
-		res.render('signin', {
-			title: 'ログイン',
-		});
+		res.redirect('/map');
 	}
 
 	res.render('index.pug');
 });
 
-app.get('/register', (req,res) => {
-	res.render('register.pug');
-});
-
-app.get('/signin', function (req,res) {
-	res.render('signin.pug');
-});
-
-app.get('/signout', function (req,res) {
+app.get('/signout', (req, res) => {
 	req.session.user_id = null;
 	res.redirect('/');
 });
 
+app.get('/map', (req, res) => {
+	if (!req.session.user_id) {
+		res.redirect('/');
+	}
+
+	res.render('map.pug');
+});
+
 app.post('/register', function(req, res, next) {
-	console.log(req.body);
 	var userName = req.body.user_name;
 	var email = req.body.email;
 	var password = req.body.password;
@@ -77,9 +72,8 @@ app.post('/register', function(req, res, next) {
 	
 	connection.query(emailExistsQuery, function(err, result) {
 		if (result && result.length > 0) {
-			res.render('register', {
-				title: '新規会員登録' ,
-				emailExists: '既に登録されていメールアドレスです'
+			res.render('index', {
+				registerMessage: '既に登録されていメールアドレスです'
 			});
 		} else {
 			connection.query(registerQuery, function(err, rows) {
@@ -88,18 +82,14 @@ app.post('/register', function(req, res, next) {
 				} else {
 					console.log('success')
 				}
-				res.redirect('/signin');
+				res.render('index', {
+					registerMessage: '登録が完了しました'
+				});
 			});
 		}
 	});
 });
 
-// app.use(express.static(path.join(__dirname, 'public')));
-// app.use(session({
-// 	serect: 'keybord cat',
-// 	resave: false,
-// 	saveUninitialized: true
-// })),
 
 app.post('/signin', function(req, res, next) {
 	var email = req.body.email;
@@ -116,19 +106,13 @@ app.post('/signin', function(req, res, next) {
 		var userName = (rows && rows.length) ? rows[0].user_name : false;
 		if (userId) {
 			req.session.user_id = userId;
-			//res.redirect('/');
-			res.render('index', {
+			res.render('map', {
 				userId,
 				userName
 			});
-
-			console.log(userId);
-
-			console.log(rows[0].user_name)
 		} else {
-			res.render('signin', {
-				title: 'ログイン',
-				noUser: 'メールアドレスとパスワードが一致するユーザーはいません'
+			res.render('index', {
+				signinMessage: 'メールアドレスとパスワードが一致するユーザーはいません'
 			});
 		}
 	});
