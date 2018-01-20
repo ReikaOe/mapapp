@@ -61,6 +61,7 @@ app.get('/map', (req, res) => {
 	res.render('map.pug');
 });
 
+
 app.post('/register', function(req, res, next) {
 	var userName = req.body.user_name;
 	var email = req.body.email;
@@ -94,7 +95,7 @@ app.post('/register', function(req, res, next) {
 app.post('/signin', function(req, res, next) {
 	var email = req.body.email;
 	var password = req.body.password;
-	var query ='SELECT user_id, user_name FROM users WHERE email = "' + email + '" AND password = "' + password + '" LIMIT 1';
+	var query ='SELECT id, user_name FROM users WHERE email = "' + email + '" AND password = "' + password + '" LIMIT 1';
 	connection.query(query, function(err, rows) {
 		if (err) {
 			console.log(err);
@@ -102,7 +103,7 @@ app.post('/signin', function(req, res, next) {
 			console.log('success');
 		}	
 
-		var userId = (rows && rows.length) ? rows[0].user_id : false;
+		var userId = (rows && rows.length) ? rows[0].id : false;
 		var userName = (rows && rows.length) ? rows[0].user_name : false;
 		if (userId) {
 			req.session.user_id = userId;
@@ -118,10 +119,11 @@ app.post('/signin', function(req, res, next) {
 	});
 });
 
+
 module.exports = function(req, res, next) {
 	var userId = req.session.user_id;
 	if (userId) {
-		var query = 'SELECT user_id, user_name FROM users WHERE user_id = ' + userId;
+		var query = 'SELECT id, user_name FROM users WHERE id = ' + userId;
 		connection.query(query, function(err, rows) {
 			if (!err) {
 				res.locals.user = rows.length? rows[0]: false;
@@ -131,6 +133,27 @@ module.exports = function(req, res, next) {
 	next();
 };
 
+app.post('/location', function(req, res, next) {
+	var lat = req.body.lat;
+	var lng = req.body.lng;
+
+	var createdAt = moment().format('YYYY-MM-DD HH:mm:ss');
+
+	var registerQuery = 'INSERT INTO spots (lat, lng, created_at,user_id) VALUES ("' + lat + '", ' + '"' + lng + '", ' + '"' + createdAt + '", ' + '"' + req.session.user_id + '")';
+
+	connection.query(registerQuery, function(err, rows) {
+			if (!err) {
+				res.locals.user = rows.length? rows[0]: false;
+			} else {
+				console.log(err);
+			}
+		});
+
+	console.log(lat);
+	console.log(lng);
+
+	res.redirect('/map');
+});
 
 app.listen(3000, function () {
 	console.log('Example app listening on port 3000!');

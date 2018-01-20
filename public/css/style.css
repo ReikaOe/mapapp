@@ -5,6 +5,7 @@ html {
 #map {
 	width: 800px;
 	height: 480px;
+	margin-left: 30px;
 }
 
 h1 {
@@ -16,6 +17,9 @@ div.head {
 }
 
 header {
+	margin-left: 30px;
+	padding-left: 10px;
+	width: 790px;
 	border-radius: 10px;
 	background-image: linear-gradient(-45deg, #debb00, #e8949d);
 /*	background: radial-gradient(#F2B9A1, #EA6264);*/

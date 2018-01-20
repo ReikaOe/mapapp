@@ -1,0 +1,90 @@
+doctype html
+html(lang='ja')
+  head
+    meta(charset='utf-8')
+    title mapapp
+    link(rel='stylesheet', href='/css/style.css')
+    script(src='https://use.fontawesome.com/a4ab12e57d.js')
+  body
+    header
+      h1 mapapp
+        i.fa.fa-map-marker.fa-2x(aria-hidden='true')
+      ul
+        if typeof userId !== 'undefined' 
+          div.head
+            p.login-user #{user_name}さんとしてログインしています
+          div.head
+            a.btn(href='/signout') ログアウト
+    #map
+
+    form(action='/location', method='post')
+      input(type='hidden', name='lat', value='35.000', id='lat')
+      input(type='hidden', name='lng', value='135.000', id='lng')
+      button.submit(type='submit') この場所を登録する
+
+    script.
+      var map;
+      function initFunc() {
+        let lat = 35.000, 
+            lng = 135.000;
+
+        let initMap = (lat, lng) => {
+          map = new google.maps.Map(document.getElementById('map'), {
+            center: { lat, lng },
+            zoom: 8,
+            styles: [
+              {elementType: 'labels.text.fill', stylers: [{color: '#fff7af'}]},
+              {
+               featureType: 'administrative',
+               stylers: [{color: '#d23549'},{visibility: 'simplified'}]
+              },
+               {
+               featureType: 'poi',
+               stylers: [{visibility: 'off'}]
+              },
+               {
+               featureType: 'transit',
+               stylers: [{visibility: 'simplified'}]
+              },
+              {
+                featureType: 'water',
+                stylers: [{color: '#30a0f0'}]
+              },
+              {
+              featureType: 'landscape.natural',
+              stylers: [{color: '#30d077'}]
+              },
+              {
+              featureType: 'landscape.man_made',
+              stylers: [{color: '#dea400'}]
+              },
+              {
+              featureType: 'road',
+              stylers: [{visibility: 'simplified'}]
+              }
+            ]
+          });
+          let marker = new google.maps.Marker({
+
+            position: { lat, lng },
+            map
+          });
+
+          console.log(lat, lng)
+          document.getElementById('lat').value = lat;
+          document.getElementById('lng').value = lng;
+        }
+
+        let getPos = () => {
+          if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition((pos) => {
+              lat = pos.coords.latitude;
+              lng = pos.coords.longitude;
+              initMap(lat, lng)
+            })
+          }
+        }
+        getPos();
+      }
+
+    script(src='https://maps.googleapis.com/maps/api/js?key=AIzaSyB-tbbm7yuonMEKcGOcfwwW-N8Kar96GRY&callback=initFunc', async, defer)
