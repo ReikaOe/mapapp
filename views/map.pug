@@ -5,6 +5,12 @@ html(lang='ja')
     title mapapp
     link(rel='stylesheet', href='/css/style.css')
     script(src='https://use.fontawesome.com/a4ab12e57d.js')
+    //- script(src='jquery.min.js', type='text/javascript')
+    script(src="https://code.jquery.com/jquery-3.3.1.min.js")
+    script(src='/jquery.leanModal.min.js', type='text/javascript')
+    
+    //- script(src='https://cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.9.1/jquery.modal.js')
+
   body
     header
       h1 mapapp
@@ -12,16 +18,59 @@ html(lang='ja')
       ul
         if typeof userId !== 'undefined' 
           div.head
-            p.login-user #{user_name}さんとしてログインしています
+            p.login-user #{userName}さんとしてログインしています
           div.head
             a.btn(href='/signout') ログアウト
     #map
+    //- form(action='/location', method='post', id='spot-form')
+    //-   input(type='hidden', name='lat', value='35.000', id='lat')
+    //-   input(type='hidden', name='lng', value='135.000', id='lng')
+    //-   button.submit(type='submit') この場所を登録する
+    button(type='button', onClick='saveSpot()') この場所を登録する
+    input(type='hidden', name='lat', value='35.000', id='lat')
+    input(type='hidden', name='lng', value='135.000', id='lng')
 
-    form(action='/location', method='post')
-      input(type='hidden', name='lat', value='35.000', id='lat')
-      input(type='hidden', name='lng', value='135.000', id='lng')
-      button.submit(type='submit') この場所を登録する
+    a(rel='leanModal', href='#modal', onClick='dispSpots()') 登録した場所
 
+    #modal 場所リスト
+    script(type='text/javascript').
+      $(function() {
+        $( 'a[rel*=leanModal]').leanModal({
+          top: 50,                     // モーダルウィンドウの縦位置を指定
+          overlay : 0.5,               // 背面の透明度
+          closeButton: ".modal_close"  // 閉じるボタンのCSS classを指定
+        });
+      });
+
+    //- div.box
+    //-   a(rel='leanmodal')
+    //-     h3.click 登録した場所
+
+
+    script(type='text/javascript').
+      $('#spot-form').submit(function(event){
+        console.log('abc');
+        event.preventDefault();
+
+        var $form = $(this);
+
+        var $button = $form.find('button');
+
+        $.ajax({
+          url: $form.attr('action'),
+          type: $form.attr('method'),
+          data: $form.serialize(),
+          timeout: 10000,
+
+          beforeSend: function(xhr, settings) {
+            $button.attr('disabled', true);
+          },
+          complete: function('disabled', false);
+          },
+        });
+      });
+
+    
     script.
       var map;
       function initFunc() {
@@ -33,7 +82,7 @@ html(lang='ja')
             center: { lat, lng },
             zoom: 8,
             styles: [
-              {elementType: 'labels.text.fill', stylers: [{color: '#fff7af'}]},
+              {elementType: 'labels.text.fill', stylers: [{color: '#fac700'}]},
               {
                featureType: 'administrative',
                stylers: [{color: '#d23549'},{visibility: 'simplified'}]
@@ -48,15 +97,15 @@ html(lang='ja')
               },
               {
                 featureType: 'water',
-                stylers: [{color: '#30a0f0'}]
+                stylers: [{color: '#009bdb'}]
               },
               {
               featureType: 'landscape.natural',
-              stylers: [{color: '#30d077'}]
+              stylers: [{color: '#67b62d'}]
               },
               {
               featureType: 'landscape.man_made',
-              stylers: [{color: '#dea400'}]
+              stylers: [{color: '#ff8b22'}]
               },
               {
               featureType: 'road',
@@ -87,4 +136,66 @@ html(lang='ja')
         getPos();
       }
 
+    script.
+      function saveSpot() {
+        console.log('def');
+        lat = document.getElementById('lat').value;
+        lng = document.getElementById('lng').value;
+
+        $.ajax({
+          url: 'https://maps.googleapis.com/maps/api/geocode/json',
+          type: 'get',
+          data: {
+            latlng: `${lat},${lng}`,
+            key: 'AIzaSyB-tbbm7yuonMEKcGOcfwwW-N8Kar96GRY'
+          }
+
+        }).done(function(msg){
+          //- console.log(msg.results[0]['address_components'][0]['long_name']);
+
+          $.ajax({
+            url: '/location',
+            type: 'post',
+            data: {
+              lat,
+              lng,
+              address: msg.results[0]['address_components'][0]['long_name']
+            },
+            timeout: 10000,
+
+            //- beforeSend: function(xhr, settings) {
+            //-   $button.attr('disabled', true);
+            //- },
+            //- complete: function('disabled', false);
+            //- },
+          });
+        })
+
+      }
+
+      function dispSpots() {
+        //- console.log('def');
+        //- lat = document.getElementById('lat').value;
+        //- lng = document.getElementById('lng').value;
+
+        $.ajax({
+            url: '/location',
+            type: 'get',
+            data: {
+              address: msg.results[0]['address_components'][0]['long_name']
+            },
+            timeout: 10000,
+
+        }).done(function(msg){
+
+          });
+        })
+
+      }
+
+
     script(src='https://maps.googleapis.com/maps/api/js?key=AIzaSyB-tbbm7yuonMEKcGOcfwwW-N8Kar96GRY&callback=initFunc', async, defer)
+
+    //- script(src='https://maps.googleapis.com/maps/api/geocode/json?latlng=40.714224,-73.961452&key=AIzaSyB-tbbm7yuonMEKcGOcfwwW-N8Kar96GRY')
+
+    //- script(src='https://maps.googleapis.com/maps/api/geocode/json&key=AIzaSyB-tbbm7yuonMEKcGOcfwwW-N8Kar96GRY')

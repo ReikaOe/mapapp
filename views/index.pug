@@ -7,6 +7,13 @@ html(lang='ja')
   body
     header
       h1 mapapp
+        i.fa.fa-map-marker.fa-2x(aria-hidden='true')
+      ul
+        if typeof userId !== 'undefined' 
+          div.head
+            p.login-user #{userName}さんとしてログインしています
+          div.head
+            a.btn(href='/signout') ログアウト
       
     .wrapper
       p.main-title
@@ -27,6 +34,9 @@ html(lang='ja')
         if registerMessage !== 'undefined'
           p.error
             = registerMessage
+
+        br
+        br
 
     .wrapper
       p.main-title

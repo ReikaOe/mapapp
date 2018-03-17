@@ -58,7 +58,23 @@ app.get('/map', (req, res) => {
 		res.redirect('/');
 	}
 
-	res.render('map.pug');
+	var userId = req.session.user_id;
+	var userName = null;
+	var query ='SELECT user_name FROM users WHERE id = "' + userId + '" LIMIT 1';
+	connection.query(query, function(err, rows) {
+		if (err) {
+			console.log(err);
+		} else {
+			console.log('success');
+		}	
+
+		userName = (rows && rows.length) ? rows[0].user_name : "名無し";
+
+		res.render('map', {
+			userId,
+ 			userName
+  		});
+	});
 });
 
 
@@ -107,10 +123,7 @@ app.post('/signin', function(req, res, next) {
 		var userName = (rows && rows.length) ? rows[0].user_name : false;
 		if (userId) {
 			req.session.user_id = userId;
-			res.render('map', {
-				userId,
-				userName
-			});
+			res.redirect('map');
 		} else {
 			res.render('index', {
 				signinMessage: 'メールアドレスとパスワードが一致するユーザーはいません'
@@ -136,10 +149,11 @@ module.exports = function(req, res, next) {
 app.post('/location', function(req, res, next) {
 	var lat = req.body.lat;
 	var lng = req.body.lng;
+	var address = req.body.address;
 
 	var createdAt = moment().format('YYYY-MM-DD HH:mm:ss');
 
-	var registerQuery = 'INSERT INTO spots (lat, lng, created_at,user_id) VALUES ("' + lat + '", ' + '"' + lng + '", ' + '"' + createdAt + '", ' + '"' + req.session.user_id + '")';
+	var registerQuery = 'INSERT INTO spots (lat, lng, created_at, user_id, address) VALUES ("' + lat + '", ' + '"' + lng + '", ' + '"' + createdAt + '", ' + '"' + req.session.user_id + '", ' + '"' + address + '")';
 
 	connection.query(registerQuery, function(err, rows) {
 			if (!err) {
@@ -152,7 +166,7 @@ app.post('/location', function(req, res, next) {
 	console.log(lat);
 	console.log(lng);
 
-	res.redirect('/map');
+	// res.redirect('/map');
 });
 
 app.listen(3000, function () {
