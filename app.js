@@ -60,7 +60,10 @@ app.get('/map', (req, res) => {
 
 	var userId = req.session.user_id;
 	var userName = null;
+	var spotName = null;
 	var query ='SELECT user_name FROM users WHERE id = "' + userId + '" LIMIT 1';
+	var spotsList = 'SELECT address FROM spots WHERE user_id = ' + userId + '';
+
 	connection.query(query, function(err, rows) {
 		if (err) {
 			console.log(err);
@@ -75,8 +78,17 @@ app.get('/map', (req, res) => {
  			userName
   		});
 	});
-});
 
+	connection.query(spotsList, function(err, rows) {
+		if (err) {
+			console.log(err);
+		} else {
+			rows.forEach((row) => {
+				console.log(`${row.address}`);
+			});
+		}
+	});
+});
 
 app.post('/register', function(req, res, next) {
 	var userName = req.body.user_name;

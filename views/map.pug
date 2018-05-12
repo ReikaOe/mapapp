@@ -30,7 +30,7 @@ html(lang='ja')
     input(type='hidden', name='lat', value='35.000', id='lat')
     input(type='hidden', name='lng', value='135.000', id='lng')
 
-    a(rel='leanModal', href='#modal', onClick='dispSpots()') 登録した場所
+    a(rel='leanModal', href='#modal', onClick='dispSpots()') 登録した場所一覧
 
     #modal 場所リスト
     script(type='text/javascript').
@@ -41,10 +41,6 @@ html(lang='ja')
           closeButton: ".modal_close"  // 閉じるボタンのCSS classを指定
         });
       });
-
-    //- div.box
-    //-   a(rel='leanmodal')
-    //-     h3.click 登録した場所
 
 
     script(type='text/javascript').
