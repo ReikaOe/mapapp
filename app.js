@@ -86,7 +86,14 @@ app.get('/map', (req, res) => {
 			rows.forEach((row) => {
 				console.log(`${row.address}`);
 			});
+
+			res.render('map', {
+			addressLists: rows,
+  		});
 		}
+
+		
+
 	});
 });
 

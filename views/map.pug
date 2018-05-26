@@ -32,7 +32,8 @@ html(lang='ja')
 
     a(rel='leanModal', href='#modal', onClick='dispSpots()') 登録した場所一覧
 
-    #modal 場所リスト
+    #modal
+
     script(type='text/javascript').
       $(function() {
         $( 'a[rel*=leanModal]').leanModal({
@@ -61,7 +62,8 @@ html(lang='ja')
           beforeSend: function(xhr, settings) {
             $button.attr('disabled', true);
           },
-          complete: function('disabled', false);
+          complete: function(xhr, settings){
+            $button.attr('disabled', false);
           },
         });
       });
@@ -166,7 +168,6 @@ html(lang='ja')
             //- },
           });
         })
-
       }
 
       function dispSpots() {
@@ -174,19 +175,20 @@ html(lang='ja')
         //- lat = document.getElementById('lat').value;
         //- lng = document.getElementById('lng').value;
 
+        //- addressLists.forEach () {
+
+        //- }
         $.ajax({
-            url: '/location',
+            url: '/map/spots.json', //data read?
             type: 'get',
-            data: {
-              address: msg.results[0]['address_components'][0]['long_name']
+            dataType: 'json',
+            // addressLists に入ってるデータをモーダルで表示
+            success: function(addressLists) {
+              $('#modal').html()
+
             },
             timeout: 10000,
-
-        }).done(function(msg){
-
-          });
         })
-
       }
 
 
