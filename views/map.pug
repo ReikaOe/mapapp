@@ -170,6 +170,7 @@ html(lang='ja')
         })
       }
 
+
       function dispSpots() {
         //- console.log('def');
         //- lat = document.getElementById('lat').value;
@@ -179,7 +180,7 @@ html(lang='ja')
 
         //- }
         $.ajax({
-            url: '/map/spots.json', //data read?
+            url: '/spots', //data read?
             type: 'get',
             dataType: 'json',
             // addressLists に入ってるデータをモーダルで表示

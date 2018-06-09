@@ -1,10 +1,28 @@
+// expressの導入
 var express = require('express');
 var app = express();
+
+// sessionを使う
 var session = require('express-session');
+
+// 日時などを使う
 var moment = require('moment');
 // var connection = require('mysqlConnection');
+
+// ExpressでPOSTによる値の取得に必要なミドルウェア
+// ミドルウェアとはrequest, response, next を受け取るfunction
+// Express単体だとJSONのパースをしてくれない
 var bodyParser = require('body-parser');
 
+var MysqlJson = require('mysql-json');
+var mysqlJason = new MysqlJson({
+	host : 'localhost',
+	user : 'root',
+	password : '',
+	database : 'map_app'
+});
+
+// mysqlの接続
 var mysql = require('mysql');
 var connection = mysql.createConnection({
   host     : 'localhost',
@@ -15,31 +33,42 @@ var connection = mysql.createConnection({
 
 connection.connect();
 
+// mysql接続確認？
 connection.query('SELECT 1 + 1 AS solution', function(err, rows, fields) {
   if (err) throw err;
   console.log('The solution is: ', rows[0].solution);
 });
 
+// ↓爪痕
 // これ使っちゃダメよ！
 // connection.end();
 
 
-
+// Expressにpugの導入
 app.set('views', `${__dirname}/views`);
 app.set('view engine', 'pug');
 
+// 静的アセットファイルを格納しているディレクトリーの名前を express.static ミドルウェア関数に渡して、ファイルの直接提供を開始
+// ${__dirname}は絶対パスを意味している
 app.use(express.static(`${__dirname}/public`));
 
+// フォームのボディをパースする準備
+// If extended is false, you can not post "nested object"
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
+//セッションの設定
 app.use(session({
+	// keyboard catをキーとしてクッキーを暗号化する設定
+  	// クッキーとはクライアント側に保存される管理用の変数
 	secret: 'keyboard cat',
+	// セッションチェックを行うたびにセッションを作成するかどうかの指定
 	resave: false,
+	// 未初期化状態のセッションを保存するかどうかの指定
 	saveUninitialized: true
 }));
 
-
+// サインインしているかどうかの判定
 app.get('/', (req, res) => {
 	if (req.session.user_id) {
 		res.redirect('/map');
@@ -48,22 +77,27 @@ app.get('/', (req, res) => {
 	res.render('index.pug');
 });
 
+// セッションを空にしてトップ画面へ
 app.get('/signout', (req, res) => {
 	req.session.user_id = null;
 	res.redirect('/');
 });
 
+//地図アプリの根幹
 app.get('/map', (req, res) => {
+	//ログインしてなかったらトップ画面へ
 	if (!req.session.user_id) {
 		res.redirect('/');
 	}
-
+	//必要な変数の定義や代入
 	var userId = req.session.user_id;
 	var userName = null;
-	var spotName = null;
+	//ユーザー名を取り出すクエリの中身を変数へ
 	var query ='SELECT user_name FROM users WHERE id = "' + userId + '" LIMIT 1';
+	//登録された地点一覧を取り出すクエリの中身を変数へ
 	var spotsList = 'SELECT address FROM spots WHERE user_id = ' + userId + '';
 
+	//ユーザーについてのクエリを投げる
 	connection.query(query, function(err, rows) {
 		if (err) {
 			console.log(err);
@@ -71,8 +105,11 @@ app.get('/map', (req, res) => {
 			console.log('success');
 		}	
 
+		// 三項演算子
+		// rowsに取ってきたデータが入ってるので空かどうかで判定
 		userName = (rows && rows.length) ? rows[0].user_name : "名無し";
 
+		// ユーザーIDとユーザー名をmapに渡す
 		res.render('map', {
 			userId,
  			userName
@@ -88,7 +125,7 @@ app.get('/map', (req, res) => {
 			});
 
 			res.render('map', {
-			addressLists: rows,
+			addressLists,
   		});
 		}
 
