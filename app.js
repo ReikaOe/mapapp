@@ -15,7 +15,7 @@ var moment = require('moment');
 var bodyParser = require('body-parser');
 
 var MysqlJson = require('mysql-json');
-var mysqlJason = new MysqlJson({
+var mysqlJson = new MysqlJson({
 	host : 'localhost',
 	user : 'root',
 	password : '',
@@ -45,6 +45,7 @@ connection.query('SELECT 1 + 1 AS solution', function(err, rows, fields) {
 
 
 // Expressにpugの導入
+app.engine('pug', require('pug').__express);
 app.set('views', `${__dirname}/views`);
 app.set('view engine', 'pug');
 
@@ -92,6 +93,7 @@ app.get('/map', (req, res) => {
 	//必要な変数の定義や代入
 	var userId = req.session.user_id;
 	var userName = null;
+	var addressLists = [];
 	//ユーザー名を取り出すクエリの中身を変数へ
 	var query ='SELECT user_name FROM users WHERE id = "' + userId + '" LIMIT 1';
 	//登録された地点一覧を取り出すクエリの中身を変数へ
@@ -108,7 +110,13 @@ app.get('/map', (req, res) => {
 		// 三項演算子
 		// rowsに取ってきたデータが入ってるので空かどうかで判定
 		userName = (rows && rows.length) ? rows[0].user_name : "名無し";
-
+		if (rows && rows.length) {
+			rows.forEach(function(row){
+				addressLists.push(row.address);
+			});
+		} else {
+			addressLists.push("地点登録はありません")
+		}
 		// ユーザーIDとユーザー名をmapに渡す
 		res.render('map', {
 			userId,
@@ -116,33 +124,62 @@ app.get('/map', (req, res) => {
   		});
 	});
 
-	connection.query(spotsList, function(err, rows) {
-		if (err) {
-			console.log(err);
-		} else {
-			rows.forEach((row) => {
-				console.log(`${row.address}`);
-			});
+	// connection.query(spotsList, function(err, rows) {
+	// 	if (err) {
+	// 		console.log(err);
+	// 	} else {
+	// 		rows.forEach((row) => {
+	// 			console.log(`${row.address}`);
+	// 		});
 
-			res.render('map', {
-			addressLists,
-  		});
-		}
-
-		
-
-	});
+	// 		res.render('map', {
+	// 		addressLists,
+ 	//  	});
+	// 	}
+	// });
 });
 
+
+
+app.get('/spots', (req, res) => {
+	//ログインしてなかったらトップ画面へ
+	if(!req.session.user_id){
+		res.redirect('/');
+	} else {
+		//必要な変数の定義・代入
+		var userId = req.session.user_id;
+		var addressLists = [];
+		var query = 'SELECT * FROM spots where user_id = ' + userId + '';
+
+		mysqlJson.query(query, function(err,rows) {
+			if (err) {
+				console.log(err);
+			} else {
+				for (var i = 0;i < rows.length; i++) {
+					addressLists.push({address: rows[i].address});
+				}
+				res.end(JSON.stringify(addressLists));
+
+				console.log('addressLists = ', addressLists);
+			}
+		});
+	}
+});
+
+// ユーザー新規登録
+// 次のミドルウェア関数は一般的にnextという変数で表される
 app.post('/register', function(req, res, next) {
 	var userName = req.body.user_name;
 	var email = req.body.email;
 	var password = req.body.password;
 	var createdAt = moment().format('YYYY-MM-DD HH:mm:ss');
 
+	// emailアドレス被ってないかの確認
 	var emailExistsQuery = 'SELECT * FROM users WHERE email = "' + email + '" LIMIT 1';
+	//データベースに追加するSQL文
 	var registerQuery = 'INSERT INTO users (user_name, email, password, created_at) VALUES ("' + userName + '", ' + '"' + email + '", ' + '"' + password + '", ' + '"' + createdAt + '")';
 	
+	// データベースに接続してクエリを投げる
 	connection.query(emailExistsQuery, function(err, result) {
 		if (result && result.length > 0) {
 			res.render('index', {
@@ -163,11 +200,14 @@ app.post('/register', function(req, res, next) {
 	});
 });
 
-
+// ユーザーのサインイン
 app.post('/signin', function(req, res, next) {
 	var email = req.body.email;
 	var password = req.body.password;
+
 	var query ='SELECT id, user_name FROM users WHERE email = "' + email + '" AND password = "' + password + '" LIMIT 1';
+	
+	// ログインについてのクエリを投げる
 	connection.query(query, function(err, rows) {
 		if (err) {
 			console.log(err);
@@ -175,6 +215,7 @@ app.post('/signin', function(req, res, next) {
 			console.log('success');
 		}	
 
+		// successの場合は変数に格納してレンダリング
 		var userId = (rows && rows.length) ? rows[0].id : false;
 		var userName = (rows && rows.length) ? rows[0].user_name : false;
 		if (userId) {
@@ -188,7 +229,7 @@ app.post('/signin', function(req, res, next) {
 	});
 });
 
-
+// app.jsが呼び出された時のモジュールの定義
 module.exports = function(req, res, next) {
 	var userId = req.session.user_id;
 	if (userId) {
@@ -202,13 +243,16 @@ module.exports = function(req, res, next) {
 	next();
 };
 
+// 地点の登録
 app.post('/location', function(req, res, next) {
 	var lat = req.body.lat;
 	var lng = req.body.lng;
 	var address = req.body.address;
 
+	// データベースに追加する時のコマンドを書いている
 	var createdAt = moment().format('YYYY-MM-DD HH:mm:ss');
 
+	// データベースに追加するクエリを投げる
 	var registerQuery = 'INSERT INTO spots (lat, lng, created_at, user_id, address) VALUES ("' + lat + '", ' + '"' + lng + '", ' + '"' + createdAt + '", ' + '"' + req.session.user_id + '", ' + '"' + address + '")';
 
 	connection.query(registerQuery, function(err, rows) {
@@ -225,6 +269,7 @@ app.post('/location', function(req, res, next) {
 	// res.redirect('/map');
 });
 
+// ポート番号の指定
 app.listen(3000, function () {
 	console.log('Example app listening on port 3000!');
 });

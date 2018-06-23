@@ -30,9 +30,10 @@ html(lang='ja')
     input(type='hidden', name='lat', value='35.000', id='lat')
     input(type='hidden', name='lng', value='135.000', id='lng')
 
-    a(rel='leanModal', href='#modal', onClick='dispSpots()') 登録した場所一覧
+    a(rel='leanModal', id="disp", href='#modal', onClick='dispSpots()') 登録した場所一覧
 
     #modal
+      ul
 
     script(type='text/javascript').
       $(function() {
@@ -43,6 +44,28 @@ html(lang='ja')
         });
       });
 
+    script(type='text/javascript').
+      function dispSpots() {
+        $.ajax({
+          url: '/spots',
+          type:'get',
+          dataType: 'json',
+          success: function(addressLists) {
+            console.log(addressLists);
+            $('#modal ul').empty();
+            $.each(addressLists, function(i){
+            $('#modal ul').append("<li>" + addressLists[i].address + "</li>");
+            });
+          },
+          error: function(XMLHttpRequest, textStatus,errorThrown){
+            alert('Error :' + errorThrown);
+            $("#XMLHttpRequest").html("XMLHttpRequest : " + XMLHttpRequest.status);
+            $("#textStatus").html("textStatus : " + textStatus);
+            $("#errorThrown").html("errorThrown : " + errorThrown);
+          },
+          timeout: 10000,
+        })
+      }
 
     script(type='text/javascript').
       $('#spot-form').submit(function(event){
@@ -67,6 +90,36 @@ html(lang='ja')
           },
         });
       });
+
+    script.
+      function saveSpot() {
+        console.log('def');
+        lat = document.getElementById('lat').value;
+        lng = document.getElementById('lng').value;
+
+        $.ajax({
+          url: 'https://maps.googleapis.com/maps/api/geocode/json',
+          type: 'get',
+          data: {
+            latlng: `${lat},${lng}`,
+            key: 'AIzaSyB-tbbm7yuonMEKcGOcfwwW-N8Kar96GRY'
+          }
+
+        }).done(function(msg){
+          //- console.log(msg.results[0]['address_components'][0]['long_name']);
+
+          $.ajax({
+            url: '/location',
+            type: 'post',
+            data: {
+              lat,
+              lng,
+              address: msg.results[0]['address_components'][0]['long_name']
+            },
+            timeout: 10000,
+          });
+        })
+      }
 
     
     script.
@@ -134,63 +187,26 @@ html(lang='ja')
         getPos();
       }
 
-    script.
-      function saveSpot() {
-        console.log('def');
-        lat = document.getElementById('lat').value;
-        lng = document.getElementById('lng').value;
+      //- function dispSpots() {
+      //-   //- console.log('def');
+      //-   //- lat = document.getElementById('lat').value;
+      //-   //- lng = document.getElementById('lng').value;
 
-        $.ajax({
-          url: 'https://maps.googleapis.com/maps/api/geocode/json',
-          type: 'get',
-          data: {
-            latlng: `${lat},${lng}`,
-            key: 'AIzaSyB-tbbm7yuonMEKcGOcfwwW-N8Kar96GRY'
-          }
+      //-   //- addressLists.forEach () {
 
-        }).done(function(msg){
-          //- console.log(msg.results[0]['address_components'][0]['long_name']);
+      //-   //- }
+      //-   $.ajax({
+      //-       url: '/spots', //data read?
+      //-       type: 'get',
+      //-       dataType: 'json',
+      //-       // addressLists に入ってるデータをモーダルで表示
+      //-       success: function(addressLists) {
+      //-         $('#modal').html()
 
-          $.ajax({
-            url: '/location',
-            type: 'post',
-            data: {
-              lat,
-              lng,
-              address: msg.results[0]['address_components'][0]['long_name']
-            },
-            timeout: 10000,
-
-            //- beforeSend: function(xhr, settings) {
-            //-   $button.attr('disabled', true);
-            //- },
-            //- complete: function('disabled', false);
-            //- },
-          });
-        })
-      }
-
-
-      function dispSpots() {
-        //- console.log('def');
-        //- lat = document.getElementById('lat').value;
-        //- lng = document.getElementById('lng').value;
-
-        //- addressLists.forEach () {
-
-        //- }
-        $.ajax({
-            url: '/spots', //data read?
-            type: 'get',
-            dataType: 'json',
-            // addressLists に入ってるデータをモーダルで表示
-            success: function(addressLists) {
-              $('#modal').html()
-
-            },
-            timeout: 10000,
-        })
-      }
+      //-       },
+      //-       timeout: 10000,
+      //-   })
+      //- }
 
 
     script(src='https://maps.googleapis.com/maps/api/js?key=AIzaSyB-tbbm7yuonMEKcGOcfwwW-N8Kar96GRY&callback=initFunc', async, defer)
