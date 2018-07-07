@@ -17,6 +17,10 @@ button{
 	padding: 2px 5px 1px 5px;
 }
 
+ul#pagination{
+	padding: 0px;
+}
+
 button:hover {
 	background-color: #555;
 }
